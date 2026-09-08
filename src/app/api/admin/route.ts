@@ -1,0 +1,143 @@
+import { NextResponse } from "next/server";
+import { db, ensureSchema } from "@/lib/db";
+import { isAdmin } from "@/lib/auth";
+import { getHouseEdge, getReferralPct, getMaxStakeCents, getMaxPayoutCents, getGlobalTest, getGlobalTestPct, getWithdrawDailyCount, getWithdrawDailyMaxCents } from "@/lib/settings";
+import { accountNo } from "@/lib/format";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  await ensureSchema();
+  const sql = db();
+
+  const [pending, users, kpi, daily, topUsers, kycPending, testAccounts] = await Promise.all([
+    sql`
+      SELECT t.*, u.email, u.name AS user_name
+      FROM cryptonichub_transactions t JOIN cryptonichub_users u ON u.id = t.user_id
+      WHERE t.status = 'pending'
+      ORDER BY t.created_at ASC
+    ` as Promise<any[]>,
+    sql`SELECT id, name, email, role, balance, created_at FROM cryptonichub_users ORDER BY created_at DESC LIMIT 100` as Promise<any[]>,
+    sql`
+      SELECT
+        (SELECT COUNT(*) FROM cryptonichub_users) AS user_count,
+        (SELECT COALESCE(SUM(balance),0) FROM cryptonichub_users) AS total_balance,
+        (SELECT COUNT(*) FROM cryptonichub_trades WHERE is_demo = false) AS trade_count,
+        (SELECT COUNT(*) FROM cryptonichub_trades WHERE status = 'won' AND is_demo = false) AS won_count,
+        (SELECT COUNT(*) FROM cryptonichub_trades WHERE status = 'lost' AND is_demo = false) AS lost_count,
+        (SELECT COALESCE(SUM(amount),0) FROM cryptonichub_transactions WHERE type='deposit' AND status='completed') AS deposits_total,
+        (SELECT COALESCE(SUM(-amount),0) FROM cryptonichub_transactions WHERE type='withdrawal' AND status='completed') AS withdrawals_total,
+        (SELECT COUNT(*) FROM cryptonichub_transactions WHERE type='deposit' AND status='pending') AS deposits_pending,
+        (SELECT COUNT(*) FROM cryptonichub_transactions WHERE type='withdrawal' AND status='pending') AS withdrawals_pending,
+        (SELECT COALESCE(SUM(-amount),0) FROM cryptonichub_transactions WHERE type='trade_stake' AND is_demo = false) AS staked_total,
+        (SELECT COALESCE(SUM(amount),0) FROM cryptonichub_transactions WHERE type='trade_payout' AND is_demo = false) AS payout_total,
+        (SELECT COALESCE(SUM(amount),0) FROM cryptonichub_transactions WHERE type='bonus' AND amount > 0) AS bonus_issued,
+        (SELECT COALESCE(SUM(bonus_locked),0) FROM cryptonichub_users) AS bonus_locked
+    ` as Promise<any[]>,
+    sql`
+      SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+             COALESCE(SUM(-amount),0) AS volume
+      FROM cryptonichub_transactions
+      WHERE type='trade_stake' AND is_demo = false AND created_at > now() - interval '14 days'
+      GROUP BY 1 ORDER BY 1
+    ` as Promise<any[]>,
+    sql`
+      SELECT u.id, u.name, u.email, u.balance, u.status, u.promo, u.created_at,
+        COALESCE(SUM(CASE WHEN t.status='won' THEN t.payout - t.stake
+                          WHEN t.status='lost' THEN -t.stake ELSE 0 END),0) AS pnl,
+        COUNT(t.id) FILTER (WHERE t.status != 'open') AS trades,
+        COALESCE((SELECT SUM(x.amount) FROM cryptonichub_transactions x
+                   WHERE x.user_id = u.id AND x.type='deposit' AND x.status='completed'),0) AS deposited,
+        COALESCE((SELECT SUM(-x.amount) FROM cryptonichub_transactions x
+                   WHERE x.user_id = u.id AND x.type='withdrawal' AND x.status<>'rejected'),0) AS withdrawn,
+        (SELECT x.method FROM cryptonichub_transactions x
+                   WHERE x.user_id = u.id AND x.type='deposit' AND x.status='completed' AND x.method IS NOT NULL
+                   ORDER BY x.created_at DESC LIMIT 1) AS deposit_method
+      FROM cryptonichub_users u
+      LEFT JOIN cryptonichub_trades t ON t.user_id = u.id AND t.is_demo = false
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
+      LIMIT 5000
+    ` as Promise<any[]>,
+    sql`
+      SELECT id, name, email, kyc_name, kyc_id_number, kyc_phone, kyc_submitted_at
+      FROM cryptonichub_users
+      WHERE kyc_status = 'pending'
+      ORDER BY kyc_submitted_at ASC NULLS LAST
+      LIMIT 1000
+    ` as Promise<any[]>,
+    sql`SELECT id, name, email, test_win_pct FROM cryptonichub_users WHERE is_test = true ORDER BY email` as Promise<any[]>,
+  ]);
+
+  const [houseEdge, referralPct, maxStakeCents, maxPayoutCents, globalTest, globalTestPct, wdDailyCount, wdDailyMaxCents] =
+    await Promise.all([
+      getHouseEdge(),
+      getReferralPct(),
+      getMaxStakeCents(),
+      getMaxPayoutCents(),
+      getGlobalTest(),
+      getGlobalTestPct(),
+      getWithdrawDailyCount(),
+      getWithdrawDailyMaxCents(),
+    ]);
+  const k = kpi[0] || {};
+  const num = (v: any) => Number(v ?? 0);
+
+  return NextResponse.json({
+    pending,
+    users: users.map((u) => ({ ...u, balance: num(u.balance) })),
+    kpi: {
+      userCount: num(k.user_count),
+      totalBalance: num(k.total_balance),
+      tradeCount: num(k.trade_count),
+      wonCount: num(k.won_count),
+      lostCount: num(k.lost_count),
+      depositsTotal: num(k.deposits_total),
+      withdrawalsTotal: num(k.withdrawals_total),
+      depositsPending: num(k.deposits_pending),
+      withdrawalsPending: num(k.withdrawals_pending),
+      stakedTotal: num(k.staked_total),
+      payoutTotal: num(k.payout_total),
+      houseProfit: num(k.staked_total) - num(k.payout_total),
+      bonusIssued: num(k.bonus_issued),
+      bonusLocked: num(k.bonus_locked),
+      // Real money the company actually holds: deposits in minus withdrawals out.
+      netCash: num(k.deposits_total) - num(k.withdrawals_total),
+    },
+    daily: daily.map((d) => ({ day: d.day, volume: num(d.volume) })),
+    houseEdge, // fraction, e.g. 0.05
+    referralPct, // fraction, e.g. 0.10
+    maxStakeCents,
+    maxPayoutCents,
+    globalTest,
+    globalTestPct,
+    wdDailyCount,
+    wdDailyMaxCents,
+    testAccounts,
+    kyc: kycPending.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      account_no: accountNo(u.id),
+      kyc_name: u.kyc_name,
+      kyc_id_number: u.kyc_id_number,
+      kyc_phone: u.kyc_phone,
+    })),
+    topUsers: topUsers.map((u) => ({
+      ...u,
+      account_no: accountNo(u.id),
+      status: u.status || "active",
+      promo: !!u.promo,
+      balance: num(u.balance),
+      pnl: num(u.pnl),
+      trades: num(u.trades),
+      deposited: num(u.deposited),
+      withdrawn: num(u.withdrawn),
+      depositMethod: u.deposit_method || null,
+    })),
+  });
+}

@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Themeable tokens as RGB channels so Tailwind opacity modifiers work. */
+:root {
+  --bg: 9 9 11;
+  --surface: 19 18 20;
+  --surface2: 27 25 27;
+  --border: 46 41 34;
+  --muted: 158 150 136;
+  --fg: 243 239 231;
+  --input: 14 13 14;
+  --sheen: rgba(255, 255, 255, 0.03);
+  --ghost: rgba(255, 255, 255, 0.04);
+  --ghost-hover: rgba(255, 255, 255, 0.07);
+  --grid: #221f19;
+  --aurora1: rgba(47, 111, 237, 0.16);
+  --aurora2: rgba(201, 154, 63, 0.08);
+  color-scheme: dark;
+}
+
+:root.light {
+  --bg: 250 247 240;
+  --surface: 255 255 255;
+  --surface2: 247 242 232;
+  --border: 232 223 205;
+  --muted: 122 111 94;
+  --fg: 26 22 16;
+  --input: 250 246 236;
+  --sheen: rgba(255, 255, 255, 0.5);
+  --ghost: rgba(35, 25, 10, 0.04);
+  --ghost-hover: rgba(35, 25, 10, 0.08);
+  --grid: #efe7d6;
+  --aurora1: rgba(47, 111, 237, 0.1);
+  --aurora2: rgba(201, 154, 63, 0.07);
+  color-scheme: light;
+}
+
+html,
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(1000px 560px at 82% -12%, var(--aurora1), transparent 60%),
+    radial-gradient(760px 460px at -5% 8%, var(--aurora2), transparent 60%),
+    radial-gradient(600px 500px at 50% 120%, var(--aurora1), transparent 60%);
+  background-attachment: fixed;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::selection {
+  background: rgba(47, 111, 237, 0.35);
+}
+
+/* Component classes live in the components layer so Tailwind utilities
+   (hidden, responsive display, rounded-*, etc.) always override them. */
+@layer components {
+.card {
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--sheen), transparent 42%),
+    rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
+  border-radius: 18px;
+  box-shadow: 0 12px 40px -20px rgba(0, 0, 0, 0.55);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-brand {
+  background: linear-gradient(180deg, #5b8dff, #2f6fed);
+  color: #fff;
+  box-shadow: 0 8px 24px -10px rgba(47, 111, 237, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.btn-brand:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.btn-ghost {
+  background: var(--ghost);
+  color: rgb(var(--fg));
+  border: 1px solid rgb(var(--border));
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--ghost-hover);
+}
+
+.input {
+  width: 100%;
+  background: rgb(var(--input));
+  border: 1px solid rgb(var(--border));
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: rgb(var(--fg));
+  outline: none;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+.input::placeholder {
+  color: rgb(var(--muted));
+}
+.input:focus {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #7fa8ff, #2f6fed 45%, #f1d28c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* subtle inset panel that adapts to theme */
+.panel {
+  background: var(--ghost);
+  border: 1px solid rgb(var(--border));
+}
+}
+
+/* Ambient drifting blobs for the landing background */
+@keyframes blobDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.12);
+  }
+  66% {
+    transform: translate(-30px, 25px) scale(0.92);
+  }
+}
+.animate-blob {
+  animation: blobDrift 20s ease-in-out infinite;
+}
+.animate-blob-slow {
+  animation: blobDrift 28s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-blob-slow {
+    animation: none;
+  }
+}
+
+/* Recent-wins ticker marquee */
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-track {
+  animation: tickerScroll 40s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* Clean shake on a losing trade */
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px); }
+  30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.animate-shake {
+  animation: shakeX 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake {
+    animation: none;
+  }
+}
