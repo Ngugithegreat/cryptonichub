@@ -17,6 +17,11 @@
   --grid: #221f19;
   --aurora1: rgba(47, 111, 237, 0.16);
   --aurora2: rgba(201, 154, 63, 0.08);
+  /* Exchange-terminal teal accent (crypto-native). */
+  --teal: 45 225 166;
+  --teal-ink: 45 225 166;
+  --teal-glow: rgba(45, 225, 166, 0.28);
+  --dot: rgba(255, 255, 255, 0.05);
   color-scheme: dark;
 }
 
@@ -34,6 +39,11 @@
   --grid: #efe7d6;
   --aurora1: rgba(47, 111, 237, 0.1);
   --aurora2: rgba(201, 154, 63, 0.07);
+  /* Darker teal so it stays legible on the light ground. */
+  --teal: 13 148 130;
+  --teal-ink: 13 148 130;
+  --teal-glow: rgba(13, 148, 130, 0.16);
+  --dot: rgba(20, 30, 28, 0.06);
   color-scheme: light;
 }
 
@@ -159,6 +169,63 @@ body {
   background: var(--ghost);
   border: 1px solid rgb(var(--border));
 }
+
+/* ---- Exchange-terminal landing primitives ---- */
+
+/* Solid teal CTA — the crypto-exchange accent button. */
+.btn-teal {
+  background: rgb(var(--teal));
+  color: #041210;
+  border: 1px solid rgb(var(--teal));
+  box-shadow: 0 8px 30px -12px var(--teal-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-teal:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+/* Sharp bordered terminal surface (small radius, thin 1px border). */
+.term-card {
+  background: rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
+  border-radius: 10px;
+}
+
+/* Faint teal glow used behind the hero terminal card. */
+.term-glow {
+  box-shadow: 0 0 0 1px rgb(var(--border)), 0 30px 80px -40px var(--teal-glow),
+    0 0 60px -30px var(--teal-glow);
+}
+
+/* Monospace tabular numerics for everything data-forward. */
+.num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+}
+
+/* Dot-grid backdrop that replaces the blurry blob mesh. */
+.term-grid {
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+/* Horizontal auto-scroll for the live ticker strip. */
+@keyframes tapeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.tape-track {
+  animation: tapeScroll 34s linear infinite;
+}
+.tape-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tape-track {
+    animation: none;
+  }
 }
 
 /* Ambient drifting blobs for the landing background */

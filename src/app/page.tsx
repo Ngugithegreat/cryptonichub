@@ -3,194 +3,235 @@ import {
   Zap,
   ShieldCheck,
   Wallet,
-  TrendingUp,
   Clock,
-  LineChart,
   ArrowRight,
+  Terminal,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { HeroVisual } from "@/components/HeroVisual";
-import { HeroChartBackground } from "@/components/HeroChartBackground";
-import { WinsTicker } from "@/components/WinsTicker";
 import { RotatingWord } from "@/components/RotatingWord";
+import { MarketTicker } from "@/components/MarketTicker";
+import { ExchangeHero } from "@/components/ExchangeHero";
+import { MarketsTable } from "@/components/MarketsTable";
 import { MARKETS, PAYOUT_MULTIPLIER } from "@/lib/markets";
+import { BRAND_NAME } from "@/lib/brand";
 
 export default function Landing() {
   return (
-    <div className="relative isolate min-h-screen overflow-hidden">
-      {/* Ambient animated background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-24 top-8 h-96 w-96 rounded-full bg-brand/25 blur-3xl animate-blob" />
-        <div className="absolute -right-24 top-48 h-[30rem] w-[30rem] rounded-full bg-sky-500/20 blur-3xl animate-blob-slow" />
-        <div className="absolute bottom-24 left-1/3 h-80 w-80 rounded-full bg-gold/15 blur-3xl animate-blob [animation-delay:-9s]" />
-        {/* Live, drifting chart line across the hero backdrop */}
-        <div className="absolute inset-x-0 top-0 h-[780px] [mask-image:linear-gradient(to_bottom,#000_58%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,#000_58%,transparent)]">
-          <HeroChartBackground />
-        </div>
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent" />
-      </div>
-      {/* Header */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
-        <div className="flex items-center gap-2">
-          <Logo className="h-8 w-8" />
-          <span className="text-xl font-bold tracking-tight">Cryptonichub</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Link href="/login" className="btn btn-ghost hidden px-4 py-2 text-sm sm:inline-flex">
-            Sign in
-          </Link>
-          <Link href="/register" className="btn btn-brand px-4 py-2 text-sm">
-            Get started
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-8 lg:grid-cols-2 lg:pt-16">
-        <div className="animate-fade-up">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
-            <Zap className="h-3.5 w-3.5" /> Live volatility index trading
-          </span>
-          <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            Trade the markets.
-            <br />
-            <RotatingWord words={["Simple.", "Fast.", "Live.", "Instant.", "Yours."]} />
-          </h1>
-          <p className="mt-5 max-w-md text-lg text-muted">
-            Predict whether a Volatility Index will rise or fall. Win up to{" "}
-            <span className="font-semibold text-brand">{PAYOUT_MULTIPLIER}×</span> your
-            stake. Deposit and withdraw with ease — built for everyone.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/register" className="btn btn-brand px-6 py-3 text-base">
-              Start trading <ArrowRight className="h-4 w-4" />
+    <div className="term-grid relative min-h-screen bg-bg">
+      {/* single subtle teal top glow — replaces the blurry blob mesh */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[420px]"
+        style={{
+          background:
+            "radial-gradient(680px 300px at 80% -8%, var(--teal-glow), transparent 70%)",
+        }}
+      />
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+            <Link href="/" className="flex items-center gap-2">
+              <Logo className="h-8 w-8" />
+              <span className="text-lg font-bold tracking-tight">{BRAND_NAME}</span>
             </Link>
-            <Link href="/login" className="btn btn-ghost px-6 py-3 text-base">
-              I have an account
-            </Link>
+            <nav className="hidden items-center gap-6 text-sm text-muted md:flex">
+              <a href="#markets" className="transition hover:text-fg">
+                Markets
+              </a>
+              <Link href="/how-it-works" className="transition hover:text-fg">
+                How it works
+              </Link>
+              <Link href="/login" className="transition hover:text-fg">
+                Log in
+              </Link>
+            </nav>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link
+                href="/register"
+                className="btn btn-teal px-4 py-2 text-sm !rounded-md"
+              >
+                Launch app
+              </Link>
+            </div>
           </div>
-          <div className="mt-6 flex items-center gap-5 text-xs text-muted">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-brand" /> Real live prices
+        </header>
+
+        {/* Live market ticker strip */}
+        <MarketTicker />
+
+        {/* Hero — split, no blobs */}
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-10 lg:grid-cols-[1.05fr_1fr] lg:pt-16">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[rgb(var(--teal))] bg-[rgb(var(--teal)/0.1)] px-2.5 py-1 text-xs font-semibold text-[rgb(var(--teal))]">
+              <Terminal className="h-3.5 w-3.5" /> The crypto-native trading terminal
             </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-brand" /> Trades from 15 seconds
-            </span>
-          </div>
-        </div>
-
-        <div className="animate-fade-up [animation-delay:120ms]">
-          <HeroVisual />
-        </div>
-      </section>
-
-      {/* Recent wins ticker — social proof (shows only when there's real data) */}
-      <WinsTicker />
-
-      {/* Markets strip */}
-      <section className="border-y border-border bg-surface/40">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-6">
-          <span className="text-xs uppercase tracking-wider text-muted">
-            Available markets
-          </span>
-          {MARKETS.map((m) => (
-            <span
-              key={m.symbol}
-              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-semibold"
-            >
-              {m.short}
-              <span className="ml-1 text-[11px] font-normal text-muted">
-                {m.name.replace(" Index", "")}
+            <h1 className="mt-4 text-4xl font-black leading-[1.03] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+              Trade volatility
+              <br />
+              markets.{" "}
+              <span className="text-[rgb(var(--teal))]">
+                <RotatingWord words={["Live.", "Instant.", "On-chain speed.", "Yours."]} />
               </span>
-            </span>
-          ))}
-        </div>
-      </section>
+            </h1>
+            <p className="mt-5 max-w-md text-base text-muted sm:text-lg">
+              A real exchange-grade terminal for volatility index markets. Read the
+              order flow, call Rise or Fall, and settle instantly — up to{" "}
+              <span className="num font-semibold text-fg">{PAYOUT_MULTIPLIER}×</span> your
+              stake, paid out to M-Pesa or crypto.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/register" className="btn btn-teal px-6 py-3 text-base !rounded-md">
+                Start trading <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#markets"
+                className="btn btn-ghost px-6 py-3 text-base !rounded-md"
+              >
+                View markets
+              </a>
+            </div>
 
-      {/* Features */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="text-center text-3xl font-bold">Everything you need to trade</h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-muted">
-          A professional trading experience without the complexity.
-        </p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Feature
-            icon={LineChart}
-            title="Real live prices"
-            desc="Volatility indices streamed live. Your trades settle on the genuine market feed — no games."
-          />
-          <Feature
-            icon={Zap}
-            title="Trade in one tap"
-            desc="Pick a market, set your stake and time, then tap Rise or Fall. That’s it."
-          />
-          <Feature
-            icon={Wallet}
-            title="Easy deposits & withdrawals"
-            desc="Fund your account and cash out your winnings via M-Pesa, crypto or bank."
-          />
-          <Feature
-            icon={ShieldCheck}
-            title="Secure by design"
-            desc="Every stake and payout is recorded to a tamper-proof ledger tied to your account."
-          />
-          <Feature
-            icon={Clock}
-            title="Fast contracts"
-            desc="Durations from 15 seconds to 5 minutes. Know your outcome quickly."
-          />
-          <Feature
-            icon={TrendingUp}
-            title="Track performance"
-            desc="See your win rate, net P&L and full trade history at a glance."
-          />
-        </div>
-      </section>
+            {/* Trust / stat row */}
+            <dl className="mt-9 grid max-w-md grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border">
+              <Stat value={`${PAYOUT_MULTIPLIER}×`} label="Max payout" />
+              <Stat value={`${MARKETS.length}`} label="Live markets" />
+              <Stat value="24/7" label="Instant payouts" />
+            </dl>
+          </div>
 
-      {/* How it works */}
-      <section className="border-t border-border bg-surface/30">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-center text-3xl font-bold">Start in 3 steps</h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            <Step n={1} title="Create an account" desc="Sign up free in under a minute." />
-            <Step n={2} title="Deposit funds" desc="Add money with your preferred method." />
-            <Step
-              n={3}
-              title="Trade & withdraw"
-              desc="Predict Rise or Fall, win, and cash out."
+          {/* Terminal card */}
+          <div className="lg:pl-2">
+            <ExchangeHero />
+          </div>
+        </section>
+
+        {/* Markets table */}
+        <section id="markets" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Markets</h2>
+              <p className="mt-1 text-sm text-muted">
+                Live volatility indices. Prices stream tick-for-tick from the market feed.
+              </p>
+            </div>
+            <Link
+              href="/register"
+              className="hidden shrink-0 text-sm font-semibold text-[rgb(var(--teal))] hover:underline sm:inline"
+            >
+              Open account →
+            </Link>
+          </div>
+          <MarketsTable />
+        </section>
+
+        {/* Feature strip */}
+        <section className="mx-auto max-w-6xl px-4 py-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Feature
+              icon={Zap}
+              title="Instant settlement"
+              desc="Contracts settle the moment they expire — from 15 seconds up."
+            />
+            <Feature
+              icon={ShieldCheck}
+              title="Escrowed & secure"
+              desc="Every stake and payout is written to a tamper-proof ledger."
+            />
+            <Feature
+              icon={Wallet}
+              title="M-Pesa & crypto payouts"
+              desc="Fund and cash out instantly via mobile money, USDT or bank."
+            />
+            <Feature
+              icon={Clock}
+              title="24/7 markets"
+              desc="Synthetic volatility indices never close — trade any time."
             />
           </div>
-          <div className="mt-10 text-center">
-            <Link href="/register" className="btn btn-brand px-8 py-3 text-base">
-              Create free account <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 py-8 text-center text-xs text-muted">
-          <div className="mb-2 flex items-center justify-center gap-2">
-            <Logo className="h-5 w-5" />
-            <span className="font-semibold text-white">Cryptonichub</span>
+        {/* CTA band */}
+        <section className="mx-auto max-w-6xl px-4 py-14">
+          <div className="term-card term-glow relative overflow-hidden px-6 py-12 text-center sm:px-12">
+            <div className="term-grid pointer-events-none absolute inset-0 opacity-40" />
+            <div className="relative">
+              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
+                Win up to <span className="text-[rgb(var(--teal))]">{PAYOUT_MULTIPLIER}×</span>{" "}
+                your stake
+              </h2>
+              <p className="mx-auto mt-3 max-w-lg text-sm text-muted sm:text-base">
+                Open a {BRAND_NAME} account in under a minute. Deposit, trade the terminal,
+                and withdraw your winnings instantly.
+              </p>
+              <div className="mt-7 flex flex-wrap justify-center gap-3">
+                <Link href="/register" className="btn btn-teal px-8 py-3 text-base !rounded-md">
+                  Create account <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/login" className="btn btn-ghost px-8 py-3 text-base !rounded-md">
+                  I have an account
+                </Link>
+              </div>
+            </div>
           </div>
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            <Link href="/how-it-works" className="hover:text-brand">How it works</Link>
-            <Link href="/payout-rules" className="hover:text-brand">Payout rules</Link>
-            <Link href="/login" className="hover:text-brand">Sign in</Link>
-            <Link href="/register" className="hover:text-brand">Create account</Link>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-border bg-surface/40">
+          <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted">
+            <div className="flex flex-col justify-between gap-6 sm:flex-row">
+              <div className="max-w-xs">
+                <div className="flex items-center gap-2 text-fg">
+                  <Logo className="h-6 w-6" />
+                  <span className="font-bold">{BRAND_NAME}</span>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed">
+                  The crypto-native terminal for volatility index markets. Trade live,
+                  settle instantly.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-x-12 gap-y-2">
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-fg">
+                    Product
+                  </span>
+                  <a href="#markets" className="hover:text-fg">Markets</a>
+                  <Link href="/how-it-works" className="hover:text-fg">How it works</Link>
+                  <Link href="/payout-rules" className="hover:text-fg">Payout rules</Link>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-fg">
+                    Account
+                  </span>
+                  <Link href="/login" className="hover:text-fg">Log in</Link>
+                  <Link href="/register" className="hover:text-fg">Create account</Link>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 border-t border-border pt-6 text-xs leading-relaxed">
+              <p className="max-w-3xl">
+                Trading volatility indices carries risk and may not be suitable for
+                everyone. Only trade with funds you can afford to lose. Prices are
+                provided by the Deriv synthetic-index feed.
+              </p>
+              <p className="mt-3">
+                © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
+              </p>
+            </div>
           </div>
-          <p className="mx-auto max-w-2xl">
-            Trading volatility indices involves risk and may not be suitable for
-            everyone. Only trade with money you can afford to lose. Prices are
-            provided by the Deriv synthetic-index feed.
-          </p>
-          <p className="mt-3">© {new Date().getFullYear()} Cryptonichub. All rights reserved.</p>
-        </div>
-      </footer>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="bg-surface px-3 py-3 text-center">
+      <div className="num text-xl font-bold text-fg">{value}</div>
+      <div className="mt-0.5 text-[11px] text-muted">{label}</div>
     </div>
   );
 }
@@ -205,24 +246,12 @@ function Feature({
   desc: string;
 }) {
   return (
-    <div className="card p-5 transition hover:border-brand/40">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
+    <div className="term-card p-5 transition-colors hover:border-[rgb(var(--teal))]">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[rgb(var(--teal))] bg-[rgb(var(--teal)/0.1)] text-[rgb(var(--teal))]">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="mt-4 font-bold">{title}</h3>
-      <p className="mt-1 text-sm text-muted">{desc}</p>
-    </div>
-  );
-}
-
-function Step({ n, title, desc }: { n: number; title: string; desc: string }) {
-  return (
-    <div className="card p-6 text-center">
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand font-bold text-white shadow-glow">
-        {n}
-      </div>
-      <h3 className="mt-3 font-bold">{title}</h3>
-      <p className="mt-1 text-sm text-muted">{desc}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">{desc}</p>
     </div>
   );
 }
