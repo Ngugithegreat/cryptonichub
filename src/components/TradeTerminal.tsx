@@ -311,7 +311,7 @@ export function TradeTerminal() {
   const botContract: "rise_fall" | "digit" = contract === "mult" ? "digit" : contract;
 
   return (
-    <div className={`mx-auto flex max-w-[1640px] flex-col px-2 py-2 sm:px-3 sm:py-3 lg:h-[calc(100vh-4rem)] lg:overflow-hidden ${shake ? "animate-shake" : ""}`}>
+    <div className={`flex min-h-[calc(100dvh-4rem)] w-full flex-col p-1.5 sm:p-2 lg:h-[calc(100vh-4rem)] lg:min-h-0 lg:overflow-hidden ${shake ? "animate-shake" : ""}`}>
       <AiScanner open={scannerOpen} onClose={() => setScannerOpen(false)} markets={markets} onApply={applySignal} />
       <Onboarding />
       <TradeReceipt trade={receipt} onClose={() => setReceipt(null)} />
