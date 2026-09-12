@@ -38,6 +38,16 @@ const METHOD_DEFS: Record<string, MethodDef> = {
   crypto: { id: "crypto", label: "Crypto", hint: "USDT / BTC & more", icon: Bitcoin },
 };
 
+// Mask the middle 3 digits of a phone for privacy on the deposit/withdraw
+// screen, e.g. 254793789350 → +254 793 ••• 350. Display-only — the real number
+// stays in state and is what gets submitted to the payment rail.
+function maskLocalPhone(p: string | null | undefined): string {
+  const d = String(p || "").replace(/\D/g, "");
+  if (d.length === 12) return `+${d.slice(0, 3)} ${d.slice(3, 6)} ••• ${d.slice(9)}`;
+  if (d.length >= 6) return `${d.slice(0, d.length - 5)} ••• ${d.slice(-2)}`;
+  return p || "";
+}
+
 // Deposit rails come from the user's country. Withdrawals swap card -> bank.
 function depositMethods(country: string | null | undefined): string[] {
   return railsForCountry(country);
@@ -481,6 +491,7 @@ function MoneyForm({
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState(methods[0]?.id ?? "card");
   const [reference, setReference] = useState("");
+  const [editPhone, setEditPhone] = useState(false);
   const [coin, setCoin] = useState("usdttrc20");
   const [cryptoPay, setCryptoPay] = useState<any | null>(null);
   const [cryptoStatus, setCryptoStatus] = useState<"waiting" | "confirming" | "done" | "failed">("waiting");
@@ -780,12 +791,27 @@ function MoneyForm({
               ? "Your payout wallet address"
               : "Send to"}
           </label>
-          <input
-            className="input"
-            placeholder={methodDef.hint || "Account / name"}
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-          />
+          {needsPhone && reference && !editPhone ? (
+            // Show the number with its middle 3 digits masked for privacy;
+            // "Change" reveals the editable field.
+            <div className="flex items-center justify-between rounded-xl border border-border bg-surface2/50 px-3 py-2.5">
+              <span className="tabular text-sm font-semibold">{maskLocalPhone(reference)}</span>
+              <button
+                type="button"
+                onClick={() => setEditPhone(true)}
+                className="text-[11px] font-semibold text-brand hover:underline"
+              >
+                Change
+              </button>
+            </div>
+          ) : (
+            <input
+              className="input"
+              placeholder={methodDef.hint || "Account / name"}
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+            />
+          )}
         </div>
       )}
 
