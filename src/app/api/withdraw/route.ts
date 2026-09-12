@@ -176,7 +176,7 @@ export async function POST(req: Request) {
   // The account can trade and use everything else, but its withdrawals are held
   // in "processing" and never sent. Funds are reserved and a normal-looking
   // pending withdrawal is recorded, but NO payout provider is called.
-  if (await isWithdrawBlocked(session.id, flow[0]?.email)) {
+  if (await isWithdrawBlocked(session.id, session.email)) {
     const heldRows = (await sql`
       INSERT INTO cryptonichub_transactions (user_id, type, amount, status, method, reference, note)
       VALUES (${session.id}, 'withdrawal', ${-amount}, 'pending', ${method}, ${phone || rawRef}, 'Withdrawal in progress')
