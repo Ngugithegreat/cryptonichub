@@ -38,12 +38,14 @@ export function countryByCode(code: string | null | undefined): Country | undefi
   return COUNTRIES.find((c) => c.code === code);
 }
 
-export type Rail = "mpesa" | "mtn" | "airtel" | "card" | "crypto";
+export type Rail = "mpesa" | "mtn" | "airtel" | "tzmobile" | "card" | "crypto";
 
-/** Deposit rails available to a user in a given country. */
+/** Deposit rails available to a user in a given country — the local mobile-money
+ * rail (routed through TeronaPay by currency) plus card/crypto. */
 export function railsForCountry(code: string | null | undefined): Rail[] {
   if (code === "KE") return ["mpesa", "card", "crypto"];
   if (code === "UG") return ["mtn", "airtel", "card", "crypto"];
+  if (code === "TZ") return ["tzmobile", "card", "crypto"];
   return ["card", "crypto"];
 }
 

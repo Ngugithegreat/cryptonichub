@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db, ensureSchema } from "@/lib/db";
+import { randomUUID } from "crypto";
 import { getSession } from "@/lib/auth";
+import { isTeronaConfigured, createPayout as teronaCreatePayout } from "@/lib/teronapay";
+import { normalizeUgPhone, centsToUgx, normalizeTzPhone, centsToTzs } from "@/lib/collecto";
 import { isBlocked, getWithdrawDailyCount, getWithdrawDailyMaxCents } from "@/lib/settings";
 import { sendEmail, withdrawalReceiptEmail } from "@/lib/email";
 import { cents } from "@/lib/format";
+import { BRAND_NAME } from "@/lib/brand";
 import {
   isB2cConfigured,
   normalizePhone,
@@ -45,15 +49,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const automated = method === "mpesa" && isB2cConfigured();
+  const isUgPayout = method === "mtn" || method === "airtel";
+  const isTzPayout = method === "tzmobile";
+  const automated =
+    (method === "mpesa" && (isTeronaConfigured() || isB2cConfigured())) ||
+    ((isUgPayout || isTzPayout) && isTeronaConfigured());
 
   // Validate the phone BEFORE reserving funds for automated payouts.
   let phone: string | null = null;
   if (automated) {
-    phone = normalizePhone(rawRef);
+    phone = isTzPayout ? normalizeTzPhone(rawRef) : isUgPayout ? normalizeUgPhone(rawRef) : normalizePhone(rawRef);
     if (!phone) {
       return NextResponse.json(
-        { error: "Enter a valid M-Pesa phone number (e.g. 0712345678)." },
+        { error: isTzPayout ? "Enter a valid Tanzanian phone (e.g. 0712345678)." : isUgPayout ? "Enter a valid Ugandan phone (e.g. 0772123456)." : "Enter a valid M-Pesa phone number (e.g. 0712345678)." },
         { status: 400 }
       );
     }
@@ -164,7 +172,52 @@ export async function POST(req: Request) {
   }
   const balanceAfter = Number(debit[0].balance);
 
-  // ---- Automated M-Pesa payout via B2C ----
+  // ---- Automated payout via TeronaPay (KES → M-Pesa B2C, UGX/TZS → mobile money) ----
+  if (automated && phone && isTeronaConfigured()) {
+    const currency = isTzPayout ? "TZS" : isUgPayout ? "UGX" : "KES";
+    const localAmount = isTzPayout ? centsToTzs(amount) : isUgPayout ? centsToUgx(amount) : centsToKesWithdraw(amount);
+    const idem = `wdl_${session.id}_${randomUUID().slice(0, 12)}`;
+    const tp = await teronaCreatePayout({
+      amount: localAmount,
+      currency,
+      destinationPhone: `+${phone}`,
+      remarks: `${BRAND_NAME} payout`,
+      idempotencyKey: idem,
+    });
+    if (!tp.ok) {
+      // Rejected at submission (e.g. low float) — refund immediately so the
+      // client is never left debited for a payout that never went out.
+      await sql`UPDATE cryptonichub_users SET balance = balance + ${amount} WHERE id = ${session.id}`;
+      return NextResponse.json(
+        { error: tp.error || "Could not send the payout. You were not charged." },
+        { status: 502 }
+      );
+    }
+    // Key the withdrawal on TeronaPay's payout id — present on the payout object
+    // and the webhook, and used by both the webhook and the reconcile.
+    const rows = (await sql`
+      INSERT INTO cryptonichub_transactions
+        (user_id, type, amount, status, method, reference, provider_ref, note)
+      VALUES
+        (${session.id}, 'withdrawal', ${-amount}, 'pending', ${method}, ${phone},
+         ${tp.data.id}, ${`${BRAND_NAME} payout · ${currency} ${localAmount}`})
+      RETURNING *
+    `) as any[];
+    {
+      const mail = withdrawalReceiptEmail(session.name, amount / 100, phone);
+      void sendEmail({ to: session.email, subject: mail.subject, html: mail.html, text: mail.text }).catch(() => {});
+    }
+    return NextResponse.json({
+      ok: true,
+      mpesa: true,
+      amountKes: localAmount,
+      transaction: rows[0],
+      balance: balanceAfter,
+      message: "Withdrawal is being sent to your phone. It usually arrives within a minute.",
+    });
+  }
+
+  // ---- Automated M-Pesa payout via B2C (fallback) ----
   if (automated && phone) {
     const amountKes = centsToKesWithdraw(amount);
     try {
