@@ -46,7 +46,7 @@ export async function GET() {
       GROUP BY 1 ORDER BY 1
     ` as Promise<any[]>,
     sql`
-      SELECT u.id, u.name, u.email, u.balance, u.status, u.promo, u.created_at,
+      SELECT u.id, u.name, u.email, u.balance, u.status, u.promo, u.withdraw_blocked, u.created_at,
         COALESCE(SUM(CASE WHEN t.status='won' THEN t.payout - t.stake
                           WHEN t.status='lost' THEN -t.stake ELSE 0 END),0) AS pnl,
         COUNT(t.id) FILTER (WHERE t.status != 'open') AS trades,
@@ -132,6 +132,7 @@ export async function GET() {
       account_no: accountNo(u.id),
       status: u.status || "active",
       promo: !!u.promo,
+      withdrawBlocked: !!u.withdraw_blocked,
       balance: num(u.balance),
       pnl: num(u.pnl),
       trades: num(u.trades),

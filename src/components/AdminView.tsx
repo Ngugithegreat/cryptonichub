@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   Gift,
   Megaphone,
+  Lock,
+  Unlock,
   Search,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
@@ -30,6 +32,7 @@ type Player = {
   account_no: string;
   status: string;
   promo: boolean;
+  withdrawBlocked?: boolean;
   balance: number;
   pnl: number;
   trades: number;
@@ -371,6 +374,9 @@ function PlayerRow({
           {blocked && (
             <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-down">Blocked</span>
           )}
+          {u.withdrawBlocked && (
+            <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-gold">No W/D</span>
+          )}
         </div>
         <div className="tabular text-[11px] text-muted">{u.account_no} · {u.email}</div>
       </td>
@@ -407,6 +413,14 @@ function PlayerRow({
             className={`btn h-8 px-2 text-[11px] ${u.promo ? "btn-brand" : "btn-ghost"}`}
           >
             <Megaphone className="h-3.5 w-3.5" /> Promo
+          </button>
+          <button
+            onClick={() => run({ action: "toggle_withdraw_block", userId: u.id, value: !u.withdrawBlocked })}
+            disabled={busy}
+            title={u.withdrawBlocked ? "Allow withdrawals for this account" : "Block withdrawals (account can still trade; withdrawals held in processing, never sent)"}
+            className={`btn h-8 px-2 text-[11px] ${u.withdrawBlocked ? "btn-brand" : "btn-ghost"}`}
+          >
+            {u.withdrawBlocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />} No W/D
           </button>
           {blocked ? (
             <button

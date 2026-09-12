@@ -102,6 +102,7 @@ export async function ensureSchema(): Promise<void> {
 
   // Email verification (OTP). Non-blocking: accounts work unverified, this just
   // confirms the address is real and drives the "verified" badge.
+  await sql`ALTER TABLE cryptonichub_users ADD COLUMN IF NOT EXISTS withdraw_blocked BOOLEAN NOT NULL DEFAULT false`;
   await sql`ALTER TABLE cryptonichub_users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false`;
   await sql`ALTER TABLE cryptonichub_users ADD COLUMN IF NOT EXISTS email_otp_hash TEXT`;
   await sql`ALTER TABLE cryptonichub_users ADD COLUMN IF NOT EXISTS email_otp_expires TIMESTAMPTZ`;
