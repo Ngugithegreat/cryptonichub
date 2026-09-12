@@ -190,6 +190,18 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_tx_user ON cryptonichub_transactions(user_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_trades_user ON cryptonichub_trades(user_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tx_provider ON cryptonichub_transactions(provider_ref)`;
+
+  // Signup phone-OTP store (hashed codes, keyed by normalized MSISDN). Rows are
+  // short-lived: consumed on success, replaced on resend, expired after 10 min.
+  await sql`
+    CREATE TABLE IF NOT EXISTS cryptonichub_otps (
+      phone        TEXT PRIMARY KEY,
+      code_hash    TEXT NOT NULL,
+      expires_at   TIMESTAMPTZ NOT NULL,
+      attempts     INTEGER NOT NULL DEFAULT 0,
+      last_sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
   _migrated = true;
 }
 

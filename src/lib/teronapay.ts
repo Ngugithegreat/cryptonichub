@@ -158,7 +158,7 @@ export function isPaid(status: string): boolean {
 }
 export function isFailed(status: string): boolean {
   const s = String(status).toLowerCase();
-  return s === "failed" || s === "canceled";
+  return ["failed","canceled","cancelled","rejected","reversed","declined","error","expired"].includes(s);
 }
 
 // Verify a webhook: X-Nowpesa-Signature = "t=<unix>,v1=<hex hmac>", where the
