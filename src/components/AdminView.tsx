@@ -363,9 +363,7 @@ function PlayerRow({
     if (raw == null) return;
     const amount = Number(raw);
     if (!Number.isFinite(amount) || amount < 0) return;
-    run({ action: "grant_bonus", userId: u.id, amount }, (j) =>
-      window.alert(`Balance set for ${u.name}. New balance: ${money(Number(j.balance ?? 0))}.`)
-    );
+    run({ action: "grant_bonus", userId: u.id, amount });
   }
 
   return (
